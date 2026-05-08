@@ -1,0 +1,48 @@
+## Build artifacts
+bin/
+obj/
+
+## User-specific files
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+## Visual Studio Code
+.vscode/
+.history/
+
+## Logs
+*.log
+
+## Environment variables
+*.env
+
+## ASP.NET secrets
+secrets.json
+
+## EF Core
+Migrations/
+
+## SQLite / Local DB
+*.db
+*.db-shm
+*.db-wal
+*.mdf
+*.ldf
+
+## IIS
+iisexpress/
+
+## Publish output
+wwwroot/
+publish/
+out/
+
+## Rider / JetBrains
+.idea/
+*.sln.iml
+
+## OS files
+.DS_Store
+Thumbs.db
