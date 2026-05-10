@@ -1,0 +1,87 @@
+@page "/register"
+@using LibraryManager.Client.Services
+@using LibraryManager.Shared.Dtos.Auth
+@using LibraryManager.Client.Auth
+@inject AuthService AuthService
+@inject ILocalStorageService LocalStorage
+@inject CustomAuthStateProvider AuthStateProvider
+@inject NavigationManager Nav
+
+<h3>Register</h3>
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-danger">@ErrorMessage</div>
+}
+
+<EditForm Model="@registerModel" OnValidSubmit="HandleRegister">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Email</label>
+        <InputText @bind-Value="registerModel.Email" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>User Name</label>
+        <InputText @bind-Value="registerModel.UserName" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Password</label>
+        <InputText @bind-Value="registerModel.Password" type="password" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Confirm Password</label>
+        <InputText @bind-Value="confirmPassword" type="password" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>First Name</label>
+        <InputText @bind-Value="registerModel.FirstName" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Last Name</label>
+        <InputText @bind-Value="registerModel.LastName" class="form-control" />
+    </div>
+
+    <button class="btn btn-primary" type="submit">Register</button>
+</EditForm>
+
+@code {
+    private RegisterDto registerModel = new();
+    private string confirmPassword = "";
+    private string? ErrorMessage;
+
+    private async Task HandleRegister()
+    {
+        ErrorMessage = null;
+
+        // ⭐ Frontend confirm password check
+        if (registerModel.Password != confirmPassword)
+        {
+            ErrorMessage = "Passwords do not match.";
+            return;
+        }
+
+        var result = await AuthService.Register(registerModel);
+
+        if (result == null || string.IsNullOrWhiteSpace(result.Token))
+        {
+            ErrorMessage = "Registration failed. Please check your details.";
+            return;
+        }
+
+        // ⭐ Save JWT token
+        await LocalStorage.SetItemAsync("authToken", result.Token);
+
+        // ⭐ Notify Blazor authentication system
+        await AuthStateProvider.MarkUserAsAuthenticated(result.Token);
+
+        // ⭐ Redirect to home
+        Nav.NavigateTo("/");
+    }
+}

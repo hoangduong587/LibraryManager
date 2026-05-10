@@ -1,6 +1,6 @@
 using AutoMapper;
 using LibraryManager.Api.Data;
-using LibraryManager.Api.Dtos;
+using LibraryManager.Shared.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

@@ -1,6 +1,6 @@
 using AutoMapper;
 using LibraryManager.Api.Data;
-using LibraryManager.Api.Dtos;
+using LibraryManager.Shared.Dtos;
 using LibraryManager.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

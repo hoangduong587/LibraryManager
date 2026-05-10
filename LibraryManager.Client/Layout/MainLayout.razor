@@ -1,12 +1,27 @@
-﻿@inherits LayoutComponentBase
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inherits LayoutComponentBase
+
 <div class="page">
     <div class="sidebar">
         <NavMenu />
     </div>
 
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        <div class="top-row px-4 d-flex justify-content-end align-items-center gap-2">
+
+            <AuthorizeView>
+                <Authorized>
+                    <button class="btn btn-sm btn-outline-danger" @onclick="Logout">
+                        Logout
+                    </button>
+                </Authorized>
+
+                <NotAuthorized>
+                    <a class="btn btn-sm btn-primary auth-btn" href="/login">Login</a>
+                    <a class="btn btn-sm btn-secondary auth-btn" href="/register">Register</a>
+                </NotAuthorized>
+            </AuthorizeView>
+
         </div>
 
         <article class="content px-4">
@@ -14,3 +29,18 @@
         </article>
     </main>
 </div>
+
+@code {
+    [Inject] AuthService AuthService { get; set; }
+    [Inject] CustomAuthStateProvider AuthStateProvider { get; set; }
+    [Inject] ILocalStorageService LocalStorage { get; set; }
+    [Inject] NavigationManager Nav { get; set; }
+
+    private async Task Logout()
+    {
+        await AuthService.Logout();
+        await LocalStorage.RemoveItemAsync("authToken");
+        await AuthStateProvider.MarkUserAsLoggedOut();
+        Nav.NavigateTo("/login");
+    }
+}

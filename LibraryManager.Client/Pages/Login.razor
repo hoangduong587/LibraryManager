@@ -1,0 +1,60 @@
+@page "/login"
+
+@using LibraryManager.Client.Services
+@using LibraryManager.Shared.Dtos.Auth
+@using LibraryManager.Client.Auth
+@inject AuthService AuthService
+@inject ILocalStorageService LocalStorage
+@inject CustomAuthStateProvider AuthStateProvider
+@inject NavigationManager Nav
+
+<h3>Login</h3>
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-danger">@ErrorMessage</div>
+}
+
+<EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Email</label>
+        <InputText @bind-Value="loginModel.Email" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Password</label>
+        <InputText @bind-Value="loginModel.Password" type="password" class="form-control" />
+    </div>
+
+    <button class="btn btn-primary" type="submit">Login</button>
+</EditForm>
+
+@code {
+    private LoginDto loginModel = new();
+    private string? ErrorMessage;
+
+    private async Task HandleLogin()
+    {
+        ErrorMessage = null;
+
+        var result = await AuthService.Login(loginModel);
+
+        if (result == null || string.IsNullOrWhiteSpace(result.Token))
+        {
+            ErrorMessage = "Invalid email or password.";
+            return;
+        }
+
+        // ⭐ Save JWT token
+        await LocalStorage.SetItemAsync("authToken", result.Token);
+
+        // ⭐ Notify Blazor authentication system
+        await AuthStateProvider.MarkUserAsAuthenticated(result.Token);
+
+        // ⭐ Redirect to home
+        Nav.NavigateTo("/");
+    }
+}

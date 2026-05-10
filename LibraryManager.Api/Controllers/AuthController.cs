@@ -1,11 +1,11 @@
-using LibraryManager.Api.Dtos.Auth;
+using LibraryManager.Shared.Dtos.Auth;
 using LibraryManager.Api.Helpers;
 using LibraryManager.Api.Models;
 using LibraryManager.Api.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using LibraryManager.Api.Data;   
+using LibraryManager.Api.Data;
 
 namespace LibraryManager.Api.Controllers
 {
@@ -16,18 +16,18 @@ namespace LibraryManager.Api.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly JwtService _jwtService;
-        private readonly ApplicationDbContext _context;   // ⭐ Added DbContext
+        private readonly ApplicationDbContext _context;
 
         public AuthController(
             UserManager<ApplicationUser> userManager,
             RoleManager<ApplicationRole> roleManager,
             JwtService jwtService,
-            ApplicationDbContext context)                 // ⭐ Inject DbContext
+            ApplicationDbContext context)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _jwtService = jwtService;
-            _context = context;                           // ⭐ Assign DbContext
+            _context = context;
         }
 
         // -------------------------
@@ -70,11 +70,10 @@ namespace LibraryManager.Api.Controllers
 
             await _userManager.AddToRoleAsync(user, "User");
 
-            // ⭐ Automatically create ProfileUser
+            // Automatically create ProfileUser
             var profile = new ProfileUser
             {
                 UserId = user.Id
-                // BorrowedBooks auto-initializes as empty list
             };
 
             _context.ProfileUsers.Add(profile);

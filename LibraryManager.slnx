@@ -1,4 +1,5 @@
 <Solution>
   <Project Path="LibraryManager.Api/LibraryManager.Api.csproj" />
   <Project Path="LibraryManager.Client/LibraryManager.Client.csproj" />
+  <Project Path="LibraryManager.Shared/LibraryManager.Shared.csproj" />
 </Solution>

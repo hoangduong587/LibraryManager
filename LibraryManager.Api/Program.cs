@@ -102,7 +102,20 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Cors configuration to allow Blazor WebAssembly client to access the API
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowBlazor", policy =>
+    {
+        policy.WithOrigins("http://localhost:5099")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
+// Apply CORS policy
+app.UseCors("AllowBlazor");
 
 // ---------------------------------------------------------
 // MIDDLEWARE
