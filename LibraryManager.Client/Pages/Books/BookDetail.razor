@@ -1,0 +1,87 @@
+@page "/books/{Id:int}"
+
+@using LibraryManager.Shared.Dtos
+@using LibraryManager.Client.Services
+@inject IBookService BookService
+@inject NavigationManager Nav
+
+<h3>Book Details</h3>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else if (Book == null)
+{
+    <p class="text-danger">Book not found.</p>
+}
+else
+{
+    <div class="card p-3 shadow-sm">
+
+        <h4>@Book.Title</h4>
+
+        <table class="table table-bordered mt-3">
+            <tbody>
+                <tr>
+                    <th>ID</th>
+                    <td>@Book.Id</td>
+                </tr>
+                <tr>
+                    <th>Genre</th>
+                    <td>@Book.Genre</td>
+                </tr>
+                <tr>
+                    <th>Author</th>
+                    <td>@Book.Author</td>
+                </tr>
+                <tr>
+                    <th>Publish Year</th>
+                    <td>@Book.PublishYear</td>
+                </tr>
+                <tr>
+                    <th>Description</th>
+                    <td>@Book.Description</td>
+                </tr>
+                <tr>
+                    <th>Location</th>
+                    <td>@Book.Location</td>
+                </tr>
+                <tr>
+                    <th>Borrower</th>
+                    <td>@(Book.BorrowerUserName ?? "None")</td>
+                </tr>
+                <tr>
+                    <th>Availability</th>
+                    <td>@(Book.Availability ? "Available" : "Borrowed")</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <button class="btn btn-secondary" @onclick="GoBack">Back to List</button>
+        <button class="btn btn-warning ms-2" @onclick="EditBook">Edit Book</button>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private BookDto? Book;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Book = await BookService.GetBookByIdAsync(Id);
+        isLoading = false;
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/books");
+    }
+
+    private void EditBook()
+    {
+        Nav.NavigateTo($"/books/edit/{Id}");
+    }
+}

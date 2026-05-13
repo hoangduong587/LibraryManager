@@ -30,7 +30,11 @@ else
             @foreach (var b in Books)
             {
                 <tr>
-                    <td>@b.Title</td>
+                    <td>
+                        <NavLink href="@($"/books/{b.Id}")">
+                            @b.Title
+                        </NavLink>
+                    </td>
                     <td>@b.Genre</td>
                     <td>@b.Author</td>
                     <td>@b.PublishYear</td>

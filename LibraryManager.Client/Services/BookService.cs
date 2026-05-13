@@ -17,12 +17,29 @@ public class BookService : IBookService
         return result ?? new List<BookDto>();
     }
 
-    public async Task<BookDto> CreateBookAsync(CreateBookDto dto)
+    public async Task<bool> CreateBookAsync(CreateBookDto dto)
     {
-        var response = await _http.PostAsJsonAsync("api/Book", dto);
-        response.EnsureSuccessStatusCode();
-
-        var created = await response.Content.ReadFromJsonAsync<BookDto>();
-        return created!;
+        var response = await _http.PostAsJsonAsync("api/book", dto);
+        return response.IsSuccessStatusCode;
     }
+
+
+    public async Task<bool> UpdateBookAsync(int id, UpdateBookDto dto)
+    {
+        var response = await _http.PutAsJsonAsync($"api/Book/{id}", dto);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<BookDto?> GetBookByIdAsync(int id)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<BookDto>($"api/book/{id}");
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
 }

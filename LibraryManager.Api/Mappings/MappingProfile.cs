@@ -1,5 +1,5 @@
 using AutoMapper;
-using LibraryManager.Api.Dtos;
+using LibraryManager.Shared.Dtos;
 using LibraryManager.Api.Models;
 
 public class MappingProfile : Profile
@@ -14,8 +14,16 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.User.Email))
             .ForMember(dest => dest.BorrowedBooks, opt => opt.MapFrom(src => src.BorrowedBooks));
 
-        // BooksList → BorrowedBookDto
-        CreateMap<BooksList, BorrowedBookDto>();
+        // BooksList → BookDto (FINAL, CORRECT VERSION)
+        CreateMap<BooksList, BookDto>()
+            .ForMember(dest => dest.Id,
+                opt => opt.MapFrom(src => src.BookId))   // ⭐ REQUIRED
+            .ForMember(dest => dest.BorrowerId,
+                opt => opt.MapFrom(src => src.ProfileUserId))
+            .ForMember(dest => dest.BorrowerUserName,
+                opt => opt.MapFrom(src => src.ProfileUser != null
+                    ? src.ProfileUser.User.UserName
+                    : null));
 
         // BorrowHistory → BorrowHistoryDto
         CreateMap<BorrowHistory, BorrowHistoryDto>()
@@ -23,16 +31,6 @@ public class MappingProfile : Profile
                 opt => opt.MapFrom(src => src.ProfileUser.User.UserName))
             .ForMember(dest => dest.BookTitle,
                 opt => opt.MapFrom(src => src.Book.Title));
-
-
-        // BooksList → BookDto
-        CreateMap<BooksList, BookDto>()
-            .ForMember(dest => dest.BorrowerId,
-                opt => opt.MapFrom(src => src.ProfileUserId))
-            .ForMember(dest => dest.BorrowerUserName,
-                opt => opt.MapFrom(src => src.ProfileUser != null
-                    ? src.ProfileUser.User.UserName
-                    : null));
 
         // CreateBookDto → BooksList
         CreateMap<CreateBookDto, BooksList>();
