@@ -10,7 +10,7 @@ namespace LibraryManager.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+   // [Authorize]
     public class BookController : ControllerBase
     {
         private readonly ApplicationDbContext _context;

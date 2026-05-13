@@ -1,0 +1,53 @@
+@page "/books"
+@using LibraryManager.Shared.Dtos
+@inject IBookService BookService
+
+<h3>Book List</h3>
+
+@if (Books is null)
+{
+    <p>Loading...</p>
+}
+else if (Books.Count == 0)
+{
+    <p>No books found.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Genre</th>
+                <th>Author</th>
+                <th>Publish Year</th>
+                <th>Location</th>
+                <th>Borrower</th>
+                <th>Availability</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var b in Books)
+            {
+                <tr>
+                    <td>@b.Title</td>
+                    <td>@b.Genre</td>
+                    <td>@b.Author</td>
+                    <td>@b.PublishYear</td>
+                    <td>@b.Location</td>
+                    <td>@(b.BorrowerUserName ?? "None")</td>
+                    <td>@(b.Availability ? "Available" : "Borrowed")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<BookDto>? Books;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Books = await BookService.GetAllBooksAsync();
+    }
+}

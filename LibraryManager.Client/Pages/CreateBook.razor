@@ -1,0 +1,59 @@
+@page "/books/create"
+@using LibraryManager.Shared.Dtos
+@inject IBookService BookService
+@inject NavigationManager Nav
+
+<h3>Add New Book</h3>
+
+<EditForm Model="Book" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Title</label>
+        <InputText class="form-control" @bind-Value="Book.Title" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Genre</label>
+        <InputText class="form-control" @bind-Value="Book.Genre" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Author</label>
+        <InputText class="form-control" @bind-Value="Book.Author" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Publish Year</label>
+        <InputNumber class="form-control" @bind-Value="Book.PublishYear" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Description</label>
+        <InputTextArea class="form-control" @bind-Value="Book.Description" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Location</label>
+        <InputText class="form-control" @bind-Value="Book.Location" />
+    </div>
+
+    <button class="btn btn-primary" type="submit">Save</button>
+    <button class="btn btn-secondary ms-2" @onclick="Cancel">Cancel</button>
+</EditForm>
+
+@code {
+    private CreateBookDto Book = new();
+
+    private async Task HandleSubmit()
+    {
+        await BookService.CreateBookAsync(Book);
+        Nav.NavigateTo("/books");
+    }
+
+    private void Cancel()
+    {
+        Nav.NavigateTo("/books");
+    }
+}

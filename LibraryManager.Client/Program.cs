@@ -5,6 +5,9 @@ using LibraryManager.Client.Services;
 using LibraryManager.Client.Auth;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
+using System.Net.Http.Headers;
+using Microsoft.Extensions.DependencyInjection;
+
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -13,11 +16,6 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 // API Base URL
 var apiBaseUrl = "http://localhost:5030";
-
-// HttpClient
-builder.Services.AddScoped(sp =>
-    new HttpClient { BaseAddress = new Uri(apiBaseUrl) }
-);
 
 // ⭐ LocalStorage
 builder.Services.AddBlazoredLocalStorage();
@@ -33,5 +31,23 @@ builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
 
 // ⭐ AuthService
 builder.Services.AddScoped<AuthService>();
+
+// ⭐ Custom JWT Handler (attaches Authorization: Bearer <token>)
+builder.Services.AddScoped<JwtAuthorizationMessageHandler>();
+
+// ⭐ Authorized HttpClient (uses JWT handler)
+builder.Services.AddHttpClient("AuthorizedClient", client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+})
+.AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
+
+// ⭐ Default HttpClient = AuthorizedClient
+builder.Services.AddScoped(sp =>
+    sp.GetRequiredService<IHttpClientFactory>().CreateClient("AuthorizedClient")
+);
+
+// ⭐ BookService
+builder.Services.AddScoped<IBookService, BookService>();
 
 await builder.Build().RunAsync();

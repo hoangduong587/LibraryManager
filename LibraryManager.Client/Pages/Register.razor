@@ -1,4 +1,5 @@
 @page "/register"
+
 @using LibraryManager.Client.Services
 @using LibraryManager.Shared.Dtos.Auth
 @using LibraryManager.Client.Auth
@@ -76,12 +77,12 @@
         }
 
         // ⭐ Save JWT token
-        await LocalStorage.SetItemAsync("authToken", result.Token);
+        await LocalStorage.SetItemAsStringAsync("authToken", result.Token);
 
         // ⭐ Notify Blazor authentication system
-        await AuthStateProvider.MarkUserAsAuthenticated(result.Token);
+        AuthStateProvider.NotifyUserAuthentication(result.Token);
 
         // ⭐ Redirect to home
-        Nav.NavigateTo("/");
+        Nav.NavigateTo("/", forceLoad: true);
     }
 }

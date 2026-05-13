@@ -8,6 +8,7 @@ namespace LibraryManager.Client.Auth
     public class CustomAuthStateProvider : AuthenticationStateProvider
     {
         private readonly ILocalStorageService _localStorage;
+        private readonly JwtSecurityTokenHandler _tokenHandler = new();
 
         public CustomAuthStateProvider(ILocalStorageService localStorage)
         {
@@ -16,42 +17,68 @@ namespace LibraryManager.Client.Auth
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            var token = await _localStorage.GetItemAsync<string>("authToken");
+            var token = await _localStorage.GetItemAsStringAsync("authToken");
 
-            if (string.IsNullOrEmpty(token))
-                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+            if (string.IsNullOrWhiteSpace(token))
+                return AnonymousState();
 
-            var identity = new ClaimsIdentity(ParseClaims(token), "jwt");
+            JwtSecurityToken? jwt;
+
+            try
+            {
+                jwt = _tokenHandler.ReadJwtToken(token);
+            }
+            catch
+            {
+                // Token is invalid → remove it
+                await _localStorage.RemoveItemAsync("authToken");
+                return AnonymousState();
+            }
+
+            // Token expired?
+            if (jwt.ValidTo < DateTime.UtcNow)
+            {
+                await _localStorage.RemoveItemAsync("authToken");
+                return AnonymousState();
+            }
+
+            var identity = new ClaimsIdentity(jwt.Claims, "jwt");
             var user = new ClaimsPrincipal(identity);
 
             return new AuthenticationState(user);
         }
 
-        public async Task MarkUserAsAuthenticated(string token)
-        {
-            await _localStorage.SetItemAsync("authToken", token);
 
-            var identity = new ClaimsIdentity(ParseClaims(token), "jwt");
+        // ---------------------------------------------------------
+        // LOGIN
+        // ---------------------------------------------------------
+        public void NotifyUserAuthentication(string token)
+        {
+            var jwt = _tokenHandler.ReadJwtToken(token);
+            var identity = new ClaimsIdentity(jwt.Claims, "jwt");
             var user = new ClaimsPrincipal(identity);
 
             NotifyAuthenticationStateChanged(
-                Task.FromResult(new AuthenticationState(user)));
+                Task.FromResult(new AuthenticationState(user))
+            );
         }
 
-        public async Task MarkUserAsLoggedOut()
+        // ---------------------------------------------------------
+        // LOGOUT
+        // ---------------------------------------------------------
+        public void NotifyUserLogout()
         {
-            await _localStorage.RemoveItemAsync("authToken");
-
-            var anonymous = new ClaimsPrincipal(new ClaimsIdentity());
             NotifyAuthenticationStateChanged(
-                Task.FromResult(new AuthenticationState(anonymous)));
+                Task.FromResult(AnonymousState())
+            );
         }
 
-        private IEnumerable<Claim> ParseClaims(string jwt)
+        // ---------------------------------------------------------
+        // Helper
+        // ---------------------------------------------------------
+        private AuthenticationState AnonymousState()
         {
-            var handler = new JwtSecurityTokenHandler();
-            var token = handler.ReadJwtToken(jwt);
-            return token.Claims;
+            return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
     }
 }
