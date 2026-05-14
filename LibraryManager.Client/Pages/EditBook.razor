@@ -17,6 +17,7 @@ else if (book == null)
 }
 else
 {
+
     <EditForm Model="@book" OnValidSubmit="HandleUpdate">
         <DataAnnotationsValidator />
         <ValidationSummary />
@@ -53,7 +54,61 @@ else
 
         <button class="btn btn-primary" type="submit">Save Changes</button>
         <button class="btn btn-secondary ms-2" @onclick="Cancel">Cancel</button>
+        <button class="btn btn-danger ms-2" type="button" @onclick="ConfirmDelete">
+            Delete Book
+        </button>
     </EditForm>
+
+   
+    @if (showDeleteConfirm)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <div class="modal-header bg-warning">
+                        <h5 class="modal-title">Confirm Delete</h5>
+                    </div>
+
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete this book?</p>
+                        <p class="text-danger">This action cannot be undone.</p>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-danger" @onclick="HandleDelete">Yes, Delete</button>
+                        <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    }
+
+
+    @if (showErrorPopup)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">Error</h5>
+                    </div>
+
+                    <div class="modal-body">
+                        <p>@errorMessage</p>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-primary" @onclick="CloseErrorPopup">OK</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    }
+
 }
 
 @code {
@@ -61,6 +116,8 @@ else
 
     private UpdateBookDto? book;
     private bool isLoading = true;
+    private string? errorMessage;
+    private bool showErrorPopup = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -84,17 +141,79 @@ else
 
     private async Task HandleUpdate()
     {
-        if (book == null)
-            return;
+        try
+        {
+            if (book == null)
+                return;
 
-        var success = await BookService.UpdateBookAsync(Id, book);
+            var success = await BookService.UpdateBookAsync(Id, book);
 
-        if (success)
-            Nav.NavigateTo("/books");
+            if (success)
+                Nav.NavigateTo("/books");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            errorMessage = "You are not authorized to update this book.";
+            showErrorPopup = true;
+        }
+        catch (Exception)
+        {
+            errorMessage = "An unexpected error occurred.";
+            showErrorPopup = true;
+        }
+
     }
 
     private void Cancel()
     {
         Nav.NavigateTo("/books");
     }
+
+    private bool showDeleteConfirm = false;
+
+    private void ConfirmDelete()
+    {
+        showDeleteConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirm = false;
+    }
+
+    private async Task HandleDelete()
+    {
+        showDeleteConfirm = false;
+
+        try
+        {
+            var success = await BookService.DeleteBookAsync(Id);
+
+            if (success)
+            {
+                Nav.NavigateTo("/books");
+                return;
+            }
+        }
+        catch (UnauthorizedAccessException)
+        {
+            errorMessage = "You are not authorized to delete this book.";
+            showErrorPopup = true;
+            return;
+        }
+        catch (Exception)
+        {
+            errorMessage = "An unexpected error occurred.";
+            showErrorPopup = true;
+            return;
+        }
+    }
+
+
+    private void CloseErrorPopup()
+    {
+        showErrorPopup = false;
+    }
+
 }
+

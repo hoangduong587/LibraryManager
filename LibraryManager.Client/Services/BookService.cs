@@ -27,8 +27,16 @@ public class BookService : IBookService
     public async Task<bool> UpdateBookAsync(int id, UpdateBookDto dto)
     {
         var response = await _http.PutAsJsonAsync($"api/Book/{id}", dto);
+
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized ||
+            response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        {
+            throw new UnauthorizedAccessException("Not authorized to update this book.");
+        }
+
         return response.IsSuccessStatusCode;
     }
+
 
     public async Task<BookDto?> GetBookByIdAsync(int id)
     {
@@ -41,5 +49,19 @@ public class BookService : IBookService
             return null;
         }
     }
+
+    public async Task<bool> DeleteBookAsync(int id)
+    {
+        var response = await _http.DeleteAsync($"api/Book/{id}");
+
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized ||
+            response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        {
+            throw new UnauthorizedAccessException("Not authorized to delete this book.");
+        }
+
+        return response.IsSuccessStatusCode;
+    }
+
 
 }
