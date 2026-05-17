@@ -29,8 +29,11 @@
         <InputText @bind-Value="loginModel.Password" type="password" class="form-control" />
     </div>
 
-    <button class="btn btn-primary" type="submit">Login</button>
+    <button class="btn btn-primary w-100" type="submit">
+        Login
+    </button>
 </EditForm>
+
 
 @code {
     private LoginDto loginModel = new();
@@ -48,13 +51,15 @@
             return;
         }
 
-        // ⭐ Save JWT token
+        // Save JWT token
         await LocalStorage.SetItemAsStringAsync("authToken", result.Token);
 
-        // ⭐ Notify Blazor authentication system
+        // Notify Blazor authentication system
         AuthStateProvider.NotifyUserAuthentication(result.Token);
 
-        // ⭐ Redirect to home
+        // Redirect to home
         Nav.NavigateTo("/", forceLoad: true);
     }
+
+
 }

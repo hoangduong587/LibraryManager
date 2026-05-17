@@ -52,5 +52,8 @@ builder.Services.AddScoped<IBookService, BookService>();
 
 builder.Services.AddScoped<BorrowService>();
 
+builder.Services.AddScoped<ProfileUserService>();
+
+
 
 await builder.Build().RunAsync();

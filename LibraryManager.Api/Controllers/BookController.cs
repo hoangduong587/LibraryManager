@@ -168,7 +168,7 @@ namespace LibraryManager.Api.Controllers
                 .FirstOrDefaultAsync(p => p.UserId == userId);
 
             if (profile == null)
-                return NotFound("Profile not found.");
+                return NotFound("Please login to return a book.");
 
             var book = profile.BorrowedBooks.FirstOrDefault(b => b.BookId == bookId);
 

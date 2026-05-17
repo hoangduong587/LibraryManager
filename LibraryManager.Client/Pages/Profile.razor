@@ -1,0 +1,130 @@
+@page "/profile"
+
+@using LibraryManager.Shared.Dtos
+@using LibraryManager.Client.Services
+@inject ProfileUserService ProfileService
+@inject NavigationManager Nav
+
+<h3>Your Profile</h3>
+
+@if (isLoading)
+{
+    <p>Loading profile...</p>
+}
+else if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-danger">@ErrorMessage</div>
+}
+else if (UserProfile == null)
+{
+    <p class="text-danger">Profile not found.</p>
+}
+else
+{
+    <div class="card p-3 shadow-sm">
+
+        <h4>@UserProfile.UserName</h4>
+        <p class="text-muted">@UserProfile.Email</p>
+
+        <table class="table table-bordered mt-3">
+            <tbody>
+                <tr>
+                    <th>First Name</th>
+                    <td>@UserProfile.FirstName</td>
+                </tr>
+                <tr>
+                    <th>Last Name</th>
+                    <td>@UserProfile.LastName</td>
+                </tr>
+                <tr>
+                    <th>Email</th>
+                    <td>@UserProfile.Email</td>
+                </tr>
+                <tr>
+                    <th>Total Borrowed Books</th>
+                    <td>@UserProfile.BorrowedBooks.Count</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <button class="btn btn-warning me-2" @onclick="EditProfile">
+            Edit Profile
+        </button>
+
+        <button class="btn btn-secondary" @onclick="GoBack">
+            Back
+        </button>
+
+        <hr />
+
+        <h5>Borrowed Books</h5>
+
+        @if (UserProfile.BorrowedBooks.Count == 0)
+        {
+            <p>You have not borrowed any books.</p>
+        }
+        else
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Book ID</th>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Genre</th>
+                        <th>Year</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var book in UserProfile.BorrowedBooks)
+                    {
+                        <tr>
+                            <td>@book.BookId</td>
+                            <td>
+                                <NavLink href="@($"/books/{book.BookId}")">
+                                    @book.Title
+                                </NavLink>
+                            </td>
+                            <td>@book.Author</td>
+                            <td>@book.Genre</td>
+                            <td>@book.PublishYear</td>
+                        </tr>
+                    }
+
+                </tbody>
+            </table>
+        }
+    </div>
+}
+
+@code {
+    private ProfileUserDto? UserProfile;
+    private bool isLoading = true;
+    private string? ErrorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            UserProfile = await ProfileService.GetProfileAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+
+        isLoading = false;
+    }
+
+    private void EditProfile()
+    {
+        Nav.NavigateTo("/profile/edit");
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/");
+    }
+}
+
+

@@ -59,21 +59,26 @@ else
             </tbody>
         </table>
 
-        <button class="btn btn-primary me-2"
-                @onclick="BorrowBook"
-                disabled="@(Book.Availability == false)">
+        <button class="btn btn-primary me-2" @onclick="BorrowBook" disabled="@(Book.Availability == false)">
             Borrow This Book
         </button>
 
+        @if (!Book.Availability)
+        {
+            <button class="btn btn-danger me-2" @onclick="ReturnBook">
+                Return This Book
+            </button>
+        }
+
         <button class="btn btn-warning ms-2" @onclick="EditBook">Edit Book</button>
         <button class="btn btn-secondary" @onclick="GoBack">Back to List</button>
+
     </div>
 }
 
 @if (ShowDialog)
 {
-    <div class="modal fade show d-block" tabindex="-1"
-         style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
         <div class="modal-dialog">
             <div class="modal-content">
 
@@ -129,11 +134,25 @@ else
             return;
         }
 
-        // Show modal dialog with message
         DialogMessage = result;
         ShowDialog = true;
 
-        // Refresh book details after borrow attempt
+        Book = await BookService.GetBookByIdAsync(Id);
+    }
+
+    private async Task ReturnBook()
+    {
+        var result = await BorrowService.ReturnBookAsync(Book.Id);
+
+        if (result == "__UNAUTHORIZED__")
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        DialogMessage = result;
+        ShowDialog = true;
+
         Book = await BookService.GetBookByIdAsync(Id);
     }
 
