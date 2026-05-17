@@ -10,7 +10,7 @@ namespace LibraryManager.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-   // [Authorize]
+    // [Authorize]
     public class BookController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -36,10 +36,14 @@ namespace LibraryManager.Api.Controllers
         // ---------------------------------------------------------
         // GET BOOK BY ID
         // ---------------------------------------------------------
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<ActionResult<BookDto>> GetBook(int id)
         {
-            var book = await _context.BooksList.FindAsync(id);
+            var book = await _context.BooksList
+                .Include(b => b.ProfileUser)
+                .ThenInclude(p => p.User)
+                .FirstOrDefaultAsync(b => b.BookId == id);
+
 
             if (book == null)
                 return NotFound("Book not found.");
@@ -107,6 +111,7 @@ namespace LibraryManager.Api.Controllers
         // BORROW BOOK
         // User borrows a book → adds to ProfileUser.BorrowedBooks
         // ---------------------------------------------------------
+        [Authorize]
         [HttpPost("{bookId}/borrow")]
         public async Task<IActionResult> BorrowBook(int bookId)
         {
@@ -129,6 +134,8 @@ namespace LibraryManager.Api.Controllers
 
             // Borrow logic
             book.Availability = false;
+            book.ProfileUserId = profile.Id;
+            book.ProfileUser = profile;
             profile.BorrowedBooks.Add(book);
 
             // Create BorrowHistory entry
@@ -170,6 +177,8 @@ namespace LibraryManager.Api.Controllers
 
             // Return logic
             book.Availability = true;
+            book.ProfileUserId = null;
+            book.ProfileUser = null;
             profile.BorrowedBooks.Remove(book);
 
             // Create BorrowHistory entry

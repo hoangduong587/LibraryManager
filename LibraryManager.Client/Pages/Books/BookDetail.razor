@@ -3,6 +3,7 @@
 @using LibraryManager.Shared.Dtos
 @using LibraryManager.Client.Services
 @inject IBookService BookService
+@inject BorrowService BorrowService
 @inject NavigationManager Nav
 
 <h3>Book Details</h3>
@@ -58,8 +59,38 @@ else
             </tbody>
         </table>
 
-        <button class="btn btn-secondary" @onclick="GoBack">Back to List</button>
+        <button class="btn btn-primary me-2"
+                @onclick="BorrowBook"
+                disabled="@(Book.Availability == false)">
+            Borrow This Book
+        </button>
+
         <button class="btn btn-warning ms-2" @onclick="EditBook">Edit Book</button>
+        <button class="btn btn-secondary" @onclick="GoBack">Back to List</button>
+    </div>
+}
+
+@if (ShowDialog)
+{
+    <div class="modal fade show d-block" tabindex="-1"
+         style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Notification</h5>
+                </div>
+
+                <div class="modal-body">
+                    <p>@DialogMessage</p>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-primary" @onclick="CloseDialog">OK</button>
+                </div>
+
+            </div>
+        </div>
     </div>
 }
 
@@ -68,6 +99,9 @@ else
 
     private BookDto? Book;
     private bool isLoading = true;
+
+    private bool ShowDialog { get; set; }
+    private string DialogMessage { get; set; } = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -83,5 +117,28 @@ else
     private void EditBook()
     {
         Nav.NavigateTo($"/books/edit/{Id}");
+    }
+
+    private async Task BorrowBook()
+    {
+        var result = await BorrowService.BorrowBookAsync(Book.Id);
+
+        if (result == "__UNAUTHORIZED__")
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        // Show modal dialog with message
+        DialogMessage = result;
+        ShowDialog = true;
+
+        // Refresh book details after borrow attempt
+        Book = await BookService.GetBookByIdAsync(Id);
+    }
+
+    private void CloseDialog()
+    {
+        ShowDialog = false;
     }
 }

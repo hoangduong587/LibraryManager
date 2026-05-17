@@ -50,4 +50,7 @@ builder.Services.AddScoped(sp =>
 // ⭐ BookService
 builder.Services.AddScoped<IBookService, BookService>();
 
+builder.Services.AddScoped<BorrowService>();
+
+
 await builder.Build().RunAsync();

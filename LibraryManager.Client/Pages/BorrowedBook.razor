@@ -1,0 +1,34 @@
+@using LibraryManager.Shared.Dtos
+@inject BorrowService BorrowService
+
+<div class="card p-3 mb-3">
+    <h4>@Book.Title</h4>
+    <p><strong>Author:</strong> @Book.Author</p>
+    <p><strong>Genre:</strong> @Book.Genre</p>
+    <p><strong>Published:</strong> @(Book.PublishYear?.ToString() ?? "Unknown")</p>
+
+    <button class="btn btn-primary me-2" @onclick="Borrow">Borrow</button>
+    <button class="btn btn-warning" @onclick="Return">Return</button>
+
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <p class="mt-2 text-info">@Message</p>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public BorrowedBookDto Book { get; set; } = new();
+
+    private string? Message;
+
+    private async Task Borrow()
+    {
+        Message = await BorrowService.BorrowBookAsync(Book.BookId);
+    }
+
+    private async Task Return()
+    {
+        Message = await BorrowService.ReturnBookAsync(Book.BookId);
+    }
+}
