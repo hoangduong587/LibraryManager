@@ -1,0 +1,203 @@
+@page "/admin/user/{UserId}/edit"
+
+@using LibraryManager.Shared.Dtos
+@inject AdminUserService AdminUserService
+@inject NavigationManager Nav
+@inject HttpClient Http
+
+<PageTitle>Edit User</PageTitle>
+
+<div class="container mt-4">
+
+    <h3 class="mb-3">Edit User</h3>
+
+    @if (isLoading)
+    {
+        <p>Loading user...</p>
+    }
+    else if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger">@ErrorMessage</div>
+    }
+    else
+    {
+        <!-- USER INFO UPDATE FORM -->
+        <EditForm Model="EditModel" OnValidSubmit="SubmitUpdate">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label class="form-label">User Name</label>
+                <InputText class="form-control" @bind-Value="EditModel.UserName" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">First Name</label>
+                <InputText class="form-control" @bind-Value="EditModel.FirstName" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Last Name</label>
+                <InputText class="form-control" @bind-Value="EditModel.LastName" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <InputText class="form-control" @bind-Value="EditModel.Email" />
+            </div>
+
+            <button class="btn btn-primary me-2" type="submit">Save Changes</button>
+            <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+        </EditForm>
+
+        @if (!string.IsNullOrEmpty(SuccessMessage))
+        {
+            <div class="alert alert-success mt-3">@SuccessMessage</div>
+        }
+
+        <hr class="my-4" />
+
+        <!-- ROLE MANAGEMENT -->
+        <h4>Change User Role</h4>
+
+        @if (!string.IsNullOrEmpty(RoleErrorMessage))
+        {
+            <div class="alert alert-danger">@RoleErrorMessage</div>
+        }
+
+        @if (!string.IsNullOrEmpty(RoleSuccessMessage))
+        {
+            <div class="alert alert-success">@RoleSuccessMessage</div>
+        }
+
+        <div class="mb-3">
+            <label class="form-label">Current Role</label>
+            <InputText class="form-control" @bind-Value="CurrentRole" disabled />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">New Role</label>
+            <select class="form-select" @bind="SelectedRole">
+                <option value="User">User</option>
+                <option value="Staff">Staff</option>
+                <option value="Manager">Manager</option>
+                <option value="Admin">Admin</option>
+            </select>
+        </div>
+
+        <button class="btn btn-warning" @onclick="ChangeRole">Apply Role Change</button>
+    }
+</div>
+
+@code {
+    [Parameter] public string UserId { get; set; } = string.Empty;
+
+    private AdminUserDto EditModel = new();
+    private string CurrentRole = "";
+    private string SelectedRole = "User";
+
+    private bool isLoading = true;
+    private string? ErrorMessage;
+    private string? SuccessMessage;
+
+    private string? RoleErrorMessage;
+    private string? RoleSuccessMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUser();
+    }
+
+    private async Task LoadUser()
+    {
+        try
+        {
+            var users = await AdminUserService.GetAllUsersAsync();
+            var user = users?.FirstOrDefault(u => u.UserId == UserId);
+
+            if (user == null)
+            {
+                ErrorMessage = "User not found.";
+                return;
+            }
+
+            EditModel = new AdminUserDto
+            {
+                UserId = user.UserId,
+                UserName = user.UserName,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                Roles = user.Roles
+            };
+
+            CurrentRole = user.Roles.FirstOrDefault() ?? "User";
+            SelectedRole = CurrentRole;
+        }
+        catch
+        {
+            ErrorMessage = "Failed to load user.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task SubmitUpdate()
+    {
+        ErrorMessage = null;
+        SuccessMessage = null;
+
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"api/admin/update/{UserId}", EditModel);
+;
+
+            if (response.IsSuccessStatusCode)
+            {
+                SuccessMessage = "User updated successfully.";
+            }
+            else
+            {
+                var msg = await response.Content.ReadAsStringAsync();
+                ErrorMessage = $"Update failed: {msg}";
+            }
+        }
+        catch
+        {
+            ErrorMessage = "An error occurred while updating the user.";
+        }
+    }
+
+    private async Task ChangeRole()
+    {
+        RoleErrorMessage = null;
+        RoleSuccessMessage = null;
+
+        try
+        {
+            var response = await Http.PutAsync($"api/usermanager/role/{UserId}?newRole={SelectedRole}", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                RoleSuccessMessage = $"Role updated to {SelectedRole}.";
+                CurrentRole = SelectedRole;
+            }
+            else
+            {
+                var msg = await response.Content.ReadAsStringAsync();
+                RoleErrorMessage = $"Role update failed: {msg}";
+            }
+        }
+        catch
+        {
+            RoleErrorMessage = "An error occurred while updating the role.";
+        }
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/admin/users");
+    }
+}

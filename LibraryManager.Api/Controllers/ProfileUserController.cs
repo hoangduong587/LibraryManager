@@ -19,6 +19,7 @@ namespace LibraryManager.Api.Controllers
             _context = context;
         }
 
+        
         // ---------------------------------------------------------
         // GET /api/profileuser
         // Admin, Manager, Staff, or the user themself
@@ -102,5 +103,57 @@ namespace LibraryManager.Api.Controllers
 
             return Ok("Profile updated successfully.");
         }
+        [HttpGet("{userId}")]
+        [Authorize(Roles = "Admin,Manager")]
+        public async Task<ActionResult<ProfileUserDto>> GetProfileByUserId(string userId)
+        {
+            var profile = await _context.ProfileUsers
+                .Include(p => p.User)
+                .Include(p => p.BorrowedBooks)
+                .FirstOrDefaultAsync(p => p.UserId == userId);
+
+            if (profile == null)
+                return NotFound("Profile not found.");
+
+            var dto = new ProfileUserDto
+            {
+                Id = profile.Id,
+                UserId = profile.UserId,
+                UserName = profile.User.UserName,
+                FirstName = profile.User.FirstName,
+                LastName = profile.User.LastName,
+                Email = profile.User.Email,
+                BorrowedBooks = profile.BorrowedBooks.Select(b => new BorrowedBookDto
+                {
+                    BookId = b.BookId,
+                    Title = b.Title,
+                    Author = b.Author,
+                    Genre = b.Genre,
+                    PublishYear = b.PublishYear
+                }).ToList()
+            };
+
+            return Ok(dto);
+        }
+        [HttpPut("{userId}")]
+        [Authorize(Roles = "Admin,Manager")]
+        public async Task<IActionResult> UpdateUserProfile(string userId, UpdateProfileUserDto dto)
+        {
+            var profile = await _context.ProfileUsers
+                .Include(p => p.User)
+                .FirstOrDefaultAsync(p => p.UserId == userId);
+
+            if (profile == null)
+                return NotFound("Profile not found.");
+
+            profile.User.FirstName = dto.FirstName;
+            profile.User.LastName = dto.LastName;
+            profile.User.Email = dto.Email;
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Profile updated successfully.");
+        }
+
     }
 }

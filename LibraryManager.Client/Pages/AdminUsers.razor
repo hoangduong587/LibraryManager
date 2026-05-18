@@ -1,0 +1,171 @@
+@page "/admin/users"
+
+@using LibraryManager.Shared.Dtos
+@inject AdminUserService AdminUserService
+@inject NavigationManager Nav
+@inject HttpClient Http
+
+<PageTitle>Manage Users</PageTitle>
+
+<div class="container mt-4">
+
+    <h3 class="mb-3">User Management</h3>
+
+    @if (isLoading)
+    {
+        <p>Loading users...</p>
+    }
+    else if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger">@ErrorMessage</div>
+    }
+    else
+    {
+        <table class="table table-striped table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>User Name</th>
+                    <th>Email</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Roles</th>
+                    <th style="width: 180px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Users)
+                {
+                    <tr>
+                        <td>@user.UserName</td>
+                        <td>@user.Email</td>
+                        <td>@user.FirstName</td>                        
+                        <td>@user.LastName</td>
+                        <td>@string.Join(", ", user.Roles)</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary me-2"
+                                    @onclick="() => EditUser(user.UserId)">
+                                Edit
+                            </button>
+
+                            <button class="btn btn-sm btn-danger"
+                                    @onclick="() => ConfirmDelete(user)">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteConfirm && selectedUser != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                </div>
+
+                <div class="modal-body">
+                    <p>
+                        Are you sure you want to delete user:
+                        <strong>@selectedUser.UserName</strong>?
+                    </p>
+
+                    @if (!string.IsNullOrEmpty(DeleteErrorMessage))
+                    {
+                        <div class="alert alert-danger mt-2">@DeleteErrorMessage</div>
+                    }
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelDelete">No</button>
+                    <button class="btn btn-danger" @onclick="DeleteUser">Yes, Delete</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<AdminUserDto> Users = new();
+    private bool isLoading = true;
+    private string? ErrorMessage;
+
+    private bool showDeleteConfirm = false;
+    private AdminUserDto? selectedUser;
+    private string? DeleteErrorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        try
+        {
+            Users = await AdminUserService.GetAllUsersAsync() ?? new();
+        }
+        catch
+        {
+            ErrorMessage = "Failed to load users.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void EditUser(string userId)
+    {
+        Nav.NavigateTo($"/admin/user/{userId}/edit");
+    }
+
+    private void ConfirmDelete(AdminUserDto user)
+    {
+        selectedUser = user;
+        DeleteErrorMessage = null;
+        showDeleteConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        selectedUser = null;
+        DeleteErrorMessage = null;
+        showDeleteConfirm = false;
+    }
+
+    private async Task DeleteUser()
+    {
+        if (selectedUser == null)
+            return;
+
+        try
+        {
+            var response = await Http.DeleteAsync($"api/usermanager/{selectedUser.UserId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Remove from UI
+                Users.Remove(selectedUser);
+                CancelDelete();
+                return;
+            }
+            else
+            {
+                var msg = await response.Content.ReadAsStringAsync();
+                DeleteErrorMessage = $"Delete failed: {msg}";
+            }
+        }
+        catch
+        {
+            DeleteErrorMessage = "An error occurred while deleting the user.";
+        }
+    }
+}

@@ -1,0 +1,117 @@
+@page "/profileupdate"
+
+@using LibraryManager.Shared.Dtos
+@inject ProfileService ProfileService
+@inject NavigationManager Nav
+
+<PageTitle>Update Profile</PageTitle>
+
+<div class="container mt-4">
+
+    <h3 class="mb-3">Update Profile</h3>
+
+    @if (isLoading)
+    {
+        <p>Loading...</p>
+    }
+    else if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger">@ErrorMessage</div>
+    }
+    else
+    {
+        <EditForm Model="UpdateModel" OnValidSubmit="SubmitUpdate">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label class="form-label">First Name</label>
+                <InputText class="form-control" @bind-Value="UpdateModel.FirstName" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Last Name</label>
+                <InputText class="form-control" @bind-Value="UpdateModel.LastName" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <InputText class="form-control" @bind-Value="UpdateModel.Email" />
+            </div>
+
+            <button class="btn btn-primary me-2" type="submit">Save Changes</button>
+            <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+        </EditForm>
+
+        @if (!string.IsNullOrEmpty(SuccessMessage))
+        {
+            <div class="alert alert-success mt-3">@SuccessMessage</div>
+        }
+    }
+</div>
+
+@code {
+    private UpdateProfileUserDto UpdateModel = new();
+    private bool isLoading = true;
+    private string? ErrorMessage;
+    private string? SuccessMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var profile = await ProfileService.GetProfileAsync();
+
+            if (profile == null)
+            {
+                ErrorMessage = "Unable to load profile.";
+                return;
+            }
+
+            UpdateModel = new UpdateProfileUserDto
+            {
+                FirstName = profile.FirstName,
+                LastName = profile.LastName,
+                Email = profile.Email
+            };
+        }
+        catch
+        {
+            ErrorMessage = "Failed to load profile.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task SubmitUpdate()
+    {
+        ErrorMessage = null;
+        SuccessMessage = null;
+
+        try
+        {
+            var response = await ProfileService.UpdateProfileAsync(UpdateModel);
+
+            if (response.IsSuccessStatusCode)
+            {
+                SuccessMessage = "Profile updated successfully.";
+            }
+            else
+            {
+                var msg = await response.Content.ReadAsStringAsync();
+                ErrorMessage = $"Update failed: {msg}";
+            }
+        }
+        catch
+        {
+            ErrorMessage = "An error occurred while updating your profile.";
+        }
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/profile");
+    }
+}

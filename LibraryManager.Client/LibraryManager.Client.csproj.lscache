@@ -308,14 +308,12 @@ Pages/
  BookList.razor
  Books/BookDetail.razor
  BorrowedBook.razor
- Counter.razor
  CreateBook.razor
  EditBook.razor
  Home.razor
  Login.razor
  NotFound.razor
  Register.razor
- Weather.razor
 _Imports.razor
 
 [dynamicFiles]
@@ -327,12 +325,10 @@ Pages/
  BookList.razor
  Books/BookDetail.razor
  BorrowedBook.razor
- Counter.razor
  CreateBook.razor
  EditBook.razor
  Home.razor
  Login.razor
  NotFound.razor
  Register.razor
- Weather.razor
 _Imports.razor
