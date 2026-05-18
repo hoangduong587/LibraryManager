@@ -54,6 +54,6 @@ builder.Services.AddScoped<BorrowService>();
 
 builder.Services.AddScoped<ProfileUserService>();
 
-
+builder.Services.AddScoped<BorrowHistoryService>();
 
 await builder.Build().RunAsync();

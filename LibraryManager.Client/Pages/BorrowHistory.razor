@@ -1,0 +1,85 @@
+@page "/history"
+
+@using LibraryManager.Shared.Dtos
+@using LibraryManager.Client.Services
+@inject BorrowHistoryService HistoryService
+@inject NavigationManager Nav
+
+<h3>Borrow History</h3>
+
+@if (isLoading)
+{
+    <p>Loading history...</p>
+}
+else if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-danger">@ErrorMessage</div>
+}
+else if (History == null || History.Count == 0)
+{
+    <p>No borrow history found.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Event ID</th>
+                <th>Book</th>
+                <th>Borrower</th>
+                <th>Borrowed</th>
+                <th>Returned</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var h in History)
+            {
+                <tr>
+                    <td>@h.Id</td>
+
+                    <td>
+                        <NavLink href="@($"/books/{h.BookId}")">
+                            @h.BookTitle
+                        </NavLink>
+                    </td>
+
+                    <td>@h.BorrowerUserName</td>
+
+                    <td>@(h.BorrowDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+
+                    <td>@(h.ReturnDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<BorrowHistoryDto>? History;
+    private bool isLoading = true;
+    private string? ErrorMessage;
+
+    protected override async Task OnInitializedAsync()
+{
+    try
+    {
+        var (Forbidden, Data) = await HistoryService.GetAllHistoryAsync();
+
+        if (Forbidden)
+        {
+            // Normal user → load personal history
+            History = await HistoryService.GetMyHistoryAsync();
+        }
+        else
+        {
+            History = Data;
+        }
+    }
+    catch (Exception ex)
+    {
+        ErrorMessage = ex.Message;
+    }
+
+    isLoading = false;
+}
+}
